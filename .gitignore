@@ -1,0 +1,9 @@
+*.obj
+*.exe
+*.pdb
+*.ilk
+*.dll
+!**/Models/*.obj
+/Build/*
+/DLLs/*
+**/BuildHashes*

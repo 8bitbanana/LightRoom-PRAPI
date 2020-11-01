@@ -13,7 +13,7 @@ namespace Util {
         // Cast the time_point directly to an int to use as the random seed
         unsigned int seed = *(unsigned int*)(void*)&time;
 
-        printf("Seed: %u", seed);
+        printf("Seed: %u\n", seed);
 
         engine = std::minstd_rand();
         engine.seed(seed);

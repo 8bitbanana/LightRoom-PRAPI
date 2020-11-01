@@ -25,6 +25,4 @@ private:
 	//glm::tquat<float> CameraRot;
 	glm::highp_mat4 CurrentProjection;
 	glm::highp_mat4 CurrentView;
-	void ProcessInput(GLfloat dt);
-	void UpdateCamera();
 };

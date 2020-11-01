@@ -9,9 +9,11 @@
 
 #include <iostream>
 
-const glm::vec3 cameraForward = glm::vec3(0.0f, 0.0f, -1.0f);
-const glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-const glm::vec3 cameraRight = glm::vec3(1.0f, 0.0f, 0.0f);
+const glm::vec3 FORWARD = glm::vec3(0.0f, 0.0f, -1.0f);
+const glm::vec3 UP = glm::vec3(0.0f, 1.0f, 0.0f);
+const glm::vec3 RIGHT = glm::vec3(1.0f, 0.0f, 0.0f);
+const float MOUSE_SENS = 45.0f;
+const float MOVE_SPEED = 15.0f;
 
 Model* object;
 
@@ -19,7 +21,7 @@ Game::Game(GLuint width, GLuint height)
 	: Width(width), Height(height)
 {
 	CameraPos = glm::vec3(0, 0, 5.0f);
-	CameraRot = glm::vec3(0, -90.0f, 0);
+	CameraRot = glm::vec3(0, 0, 0);
 }
 
 Game::~Game()
@@ -38,20 +40,40 @@ void Game::Init()
 
 void Game::Update(GLfloat dt)
 {
-	UpdateCamera();
-}
+	CameraRot += glm::vec3(Mouse.y, -Mouse.x, 0) * dt * MOUSE_SENS;
+	if (CameraRot.x > 89.0f)  CameraRot.x = 89.0f;
+	if (CameraRot.x < -89.0f) CameraRot.x = -89.0f;
 
-void Game::ProcessInput(GLfloat dt)
-{
-	
-}
+	glm::vec3 direction = FORWARD;
+	glm::quat rot = glm::quat(glm::radians(CameraRot));
+	direction = glm::rotate(rot, direction);
+	direction = glm::normalize(direction);
 
-void Game::UpdateCamera() {
+	// Rotation without X axis, for use with movement
+	glm::quat rotNoX = glm::quat(glm::radians(glm::vec3(
+		0,
+		CameraRot.y,
+		CameraRot.z
+	)));
+
+	glm::vec3 moveVector(0,0,0);
+	if (Keys[GLFW_KEY_W])
+		moveVector += FORWARD;
+	if (Keys[GLFW_KEY_A])
+		moveVector -= RIGHT;
+	if (Keys[GLFW_KEY_S])
+		moveVector -= FORWARD;
+	if (Keys[GLFW_KEY_D])
+		moveVector += RIGHT;
+	if (Keys[GLFW_KEY_SPACE])
+		moveVector += UP;
+	if (Keys[GLFW_KEY_LEFT_CONTROL])
+		moveVector -= UP;
+	moveVector *= dt * MOVE_SPEED;
+	CameraPos += glm::rotate(rotNoX, moveVector);
+
 	CurrentView = glm::mat4(1.0);
-	CurrentView = glm::lookAt(CameraPos, glm::vec3(0), cameraUp);
-	// glm::translate(CurrentView, CameraPos);
-	// glm::quat rot = glm::quat(CameraRot);
-	// CurrentView *= glm::toMat4(rot);
+	CurrentView = glm::lookAt(CameraPos, CameraPos + direction, UP);
 }
 
 void Game::Draw()

@@ -32,10 +32,10 @@ Game::~Game()
 void Game::Init()
 {
 	ResourceManager::LoadShader("Shaders/baseproj.vert", "Shaders/baseproj.frag", nullptr, "baseproj");
-	ResourceManager::LoadMesh("Models/rook.obj", "rook");
+	ResourceManager::LoadMeshes("Models/ball_rb.obj", "ball");
 	CurrentProjection = glm::perspective(glm::radians(60.0f), float(Width) / Height, 0.1f, 100.0f);
 
-	object = new Model("rook", glm::vec3(0), glm::vec3(0), glm::vec3(1));
+	object = new Model("ball", glm::vec3(0), glm::vec3(0), glm::vec3(1));
 }
 
 void Game::Update(GLfloat dt)

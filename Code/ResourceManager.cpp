@@ -14,7 +14,7 @@
 
 map<string, Texture2D> ResourceManager::Textures;
 map<string, Shader> ResourceManager::Shaders;
-map<string, Mesh> ResourceManager::Meshes;
+map<string, vector<Mesh>> ResourceManager::Meshes;
 
 
 Shader ResourceManager::LoadShader(const GLchar* vShaderFile, const GLchar* fShaderFile, const GLchar* gShaderFile, string name)
@@ -39,12 +39,12 @@ Texture2D ResourceManager::GetTexture(string name)
 	return Textures[name];
 }
 
-Mesh ResourceManager::LoadMesh(string filename, string name) {
-	Meshes[name] = loadMeshFromFile(filename);
+vector<Mesh> ResourceManager::LoadMeshes(string filename, string name) {
+	Meshes[name] = loadMeshesFromFile(filename);
 	return Meshes[name];
 }
 
-Mesh ResourceManager::GetMesh(string name) {
+vector<Mesh> ResourceManager::GetMeshes(string name) {
 	return Meshes[name];
 }
 
@@ -62,7 +62,14 @@ glm::vec3 ResourceManager::AiToGlm(aiVector3D aiV) {
     return glm::vec3(aiV.x, aiV.y, aiV.z);
 }
 
-void ResourceManager::loadMeshesFromNode(const aiNode* node, aiMesh** meshes, glm::mat4 currentTransform, vector<AssimpMesh>* assimpmeshes) {
+glm::vec4 ResourceManager::AiToGlm(aiColor3D aiC) {
+    return glm::vec4(aiC.r, aiC.g, aiC.b, 1);
+}
+glm::vec4 ResourceManager::AiToGlm(aiColor4D aiC) {
+    return glm::vec4(aiC.r, aiC.g, aiC.b, aiC.a);
+}
+
+void ResourceManager::loadMeshesFromNode(const aiNode* node, aiMesh** meshes, glm::mat4 currentTransform, vector<AssimpMesh>* assimpmeshes, const aiScene* scene) {
     // Add this node's transform to the stack
     currentTransform = currentTransform * AiToGlm(node->mTransformation);
     // Iterate through each mesh in this node
@@ -84,19 +91,35 @@ void ResourceManager::loadMeshesFromNode(const aiNode* node, aiMesh** meshes, gl
                 meshStruct.Indices.push_back(face.mIndices[i]);
             }
         }
+        if (mesh->mMaterialIndex >= 0)
+        {
+            aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+            aiColor3D color;
+            material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
+            meshStruct.DiffuseColor = AiToGlm(color);
+            material->Get(AI_MATKEY_COLOR_SPECULAR, color);
+            meshStruct.SpecularColor = AiToGlm(color);
+            material->Get(AI_MATKEY_COLOR_AMBIENT, color);
+            meshStruct.AmbientColor = AiToGlm(color);
+            material->Get(AI_MATKEY_COLOR_EMISSIVE, color);
+            meshStruct.EmissiveColor = AiToGlm(color);
+            material->Get(AI_MATKEY_COLOR_TRANSPARENT, color);
+            meshStruct.TransparentColor = AiToGlm(color);
+        }
+
         assimpmeshes->push_back(meshStruct);
     }
 
     // Recursively run this function for all of this node's children
     for (unsigned int childIndex=0; childIndex<node->mNumChildren; childIndex++) {
         aiNode* child = node->mChildren[childIndex];
-        loadMeshesFromNode(child, meshes, currentTransform, assimpmeshes);
+        loadMeshesFromNode(child, meshes, currentTransform, assimpmeshes, scene);
     }
 }
 
-Mesh ResourceManager::loadMeshFromFile(string filename) {
-    Mesh outmesh;
+vector<Mesh> ResourceManager::loadMeshesFromFile(string filename) {
     Assimp::Importer importer;
+    vector<Mesh> outmeshes = vector<Mesh>();
     const aiScene* scene = importer.ReadFile(filename,
         // aiProcess_CalcTangentSpace |
         aiProcess_Triangulate |
@@ -106,29 +129,35 @@ Mesh ResourceManager::loadMeshFromFile(string filename) {
 
     if (!scene) {
         fprintf(stderr, "ASSIMP ERROR - %s\n", importer.GetErrorString());
-        return outmesh;
+        return outmeshes;
     }
 
     vector<AssimpMesh> assimpMeshes;
-    loadMeshesFromNode(scene->mRootNode, scene->mMeshes, glm::mat4(1.0), &assimpMeshes);
+    loadMeshesFromNode(scene->mRootNode, scene->mMeshes, glm::mat4(1.0), &assimpMeshes, scene);
     
     // Extract the verts from the meshes into one vector
-    unsigned int indexOffset = 0;
-    vector<glm::vec3> verts;
-    vector<GLuint> inds;
+    
 
     for (auto mesh : assimpMeshes) {
+        vector<glm::vec3> verts;
+        vector<GLuint> inds;
+        Mesh outmesh;
+
         for (auto vert : mesh.Vertices) {
             glm::vec4 vert4 = glm::vec4(vert, 1);
             verts.push_back((glm::vec3)(vert4 * mesh.Transform));
         }   
         for (auto ind : mesh.Indices) {
-            inds.push_back(ind + indexOffset);
+            inds.push_back(ind);
         }
-        indexOffset += mesh.Vertices.size();
+
+        // Copy data from struct to Mesh object
+        outmesh.Import(verts, inds);
+        outmesh.DiffuseColor = mesh.DiffuseColor;
+
+        outmeshes.push_back(outmesh);
     }
-    outmesh.Import(verts, inds);
-    return outmesh;
+    return outmeshes;
 }
 
 void ResourceManager::Clear()

@@ -69,8 +69,7 @@ int main(int argc, char* argv[]) {
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 		glfwPollEvents();
-		// Sends the mouse movement of to ArcadeGame
-		// Currently unused
+		
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
 		mouse_callback(window, xpos, ypos);
@@ -81,12 +80,12 @@ int main(int argc, char* argv[]) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		ArcadeGame.Draw();
 
-		// Limit to 120 fps
-		while (glfwGetTime() < lastFrame + 1.0/120) {
+		glfwSwapBuffers(window);
+
+		// Limit to 60 fps
+		while (glfwGetTime() < lastFrame + 1.0/60) {
 			std::this_thread::sleep_for(std::chrono::microseconds(10));
 		}
-
-		glfwSwapBuffers(window);
 	}
 }
 

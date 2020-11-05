@@ -13,7 +13,7 @@ Model::Model() {
 
 Model::Model(const string& meshname) {
     SetShader("baseproj");
-    mesh = ResourceManager::GetMesh(meshname);
+    meshes = ResourceManager::GetMeshes(meshname);
     Init();
 }
 
@@ -21,7 +21,7 @@ Model::Model(const string& meshname, vec3 position, vec3 rotation, vec3 size)
  : Position(position), Rotation(rotation), Size(size) {
     Rotation = glm::radians(Rotation);
     SetShader("baseproj");
-    mesh = ResourceManager::GetMesh(meshname);
+    meshes = ResourceManager::GetMeshes(meshname);
     Init();
 }
 
@@ -51,5 +51,7 @@ void Model::Draw(glm::mat4 projection, glm::mat4 view) {
 
 	shader.SetMatrix4("pvm", pvm);
 	
-	mesh.Draw();
+    for (Mesh mesh : meshes) {
+	    mesh.Draw(shader);
+    }
 }

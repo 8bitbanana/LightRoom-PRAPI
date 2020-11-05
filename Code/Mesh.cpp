@@ -24,7 +24,8 @@ void Mesh::Import(vector<glm::vec3> vertices, vector<GLuint> indices) {
 	glEnableVertexAttribArray(0);
 }
 
-void Mesh::Draw() {
+void Mesh::Draw(Shader& shader) {
+	shader.SetVector4f("color", DiffuseColor);
     glBindVertexArray(VAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glDrawElements(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0);

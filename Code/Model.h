@@ -29,7 +29,7 @@ public:
     glm::vec3 Size = glm::vec3(1);
 protected:
     glm::highp_mat4 currentModel;
-    Mesh mesh;
+    vector<Mesh> meshes;
 private:
     unsigned int VBO, VAO, EBO;
     Shader shader;

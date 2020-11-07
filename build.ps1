@@ -28,8 +28,13 @@ function Get-HashFile {
         # Do nothing and return the empty dict if the file doesn't exist
     } else {
         foreach ($line in Get-Content $hashesfile) {
-            $filename, $hash = $line.split(" ")
-            $dict.Add($filename, $hash)
+            $filename, $hash = $line.split("|")
+            $hashstr = ""
+            foreach ($x in $hash) {
+                $hashstr += "$x|"
+            }
+            $hashstr = $hashstr.TrimEnd("|")
+            $dict.Add($filename, $hashstr)
         }
     }
     return $dict
@@ -48,7 +53,7 @@ function Set-HashFile {
     }
     
     foreach ($h in $hashes.GetEnumerator()) {
-        Add-Content -Path $hashesfile -Value ("{0} {1}" -f $h.Name,$h.Value)
+        Add-Content -Path $hashesfile -Value ("{0}|{1}" -f $h.Name,$h.Value)
     }
 }
 
@@ -125,11 +130,23 @@ $objectfiles = New-Object string[] $sourcefiles.Length;
 $oldHashes = Get-HashFile
 $newHashes = $oldHashes
 
+Write-Output $oldHashes
+
 $canlink = $true
 for ($i=0; $i -lt $sourcefiles.Length; $i++) {
     $sourcefile = $sourcefiles[$i]
-    $basename = (Get-Item $sourcefile).BaseName
-    $hash = (Get-FileHash -Algorithm SHA1 -Path $sourcefile).Hash
+    $item = Get-Item $sourcefile
+    $basename = $item.BaseName
+    $directory = $item.Directory
+
+    $hash = "CPP" + (Get-FileHash -Algorithm SHA1 -Path $sourcefile).Hash
+
+    # Check to see if a header file exists
+    $headerfile = "$directory\$basename.h"
+    if (Test-Path $headerfile) {
+        # If there is a header file, add it's hash to the source file's hash
+        $hash += "|H" + (Get-FileHash -Algorithm SHA1 -Path $headerfile).Hash
+    }
     # Check to see if the obj needs to be rebuilt
     if ($force -or $oldHashes[$sourcefile] -ne $hash) {
         Write-Output "Building $sourcefile..."

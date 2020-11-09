@@ -12,7 +12,7 @@ Model::Model() {
 }
 
 Model::Model(const string& meshname) {
-    SetShader("baseproj");
+    SetShader("material");
     meshes = ResourceManager::GetMeshes(meshname);
     Init();
 }
@@ -20,7 +20,7 @@ Model::Model(const string& meshname) {
 Model::Model(const string& meshname, vec3 position, vec3 rotation, vec3 size)
  : Position(position), Rotation(rotation), Size(size) {
     Rotation = glm::radians(Rotation);
-    SetShader("baseproj");
+    SetShader("material");
     meshes = ResourceManager::GetMeshes(meshname);
     Init();
 }

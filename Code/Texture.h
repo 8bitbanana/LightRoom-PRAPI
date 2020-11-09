@@ -4,7 +4,12 @@
 
 class Texture2D
 {
+private:
+	static constexpr char* const TypeStr[] = { "diffuse", "specular" };
 public:
+	enum TextureType { DIFFUSE = 0, SPECULAR };
+	TextureType Type;
+
 	// Holds the ID of the texture object, used for all texture operations to reference to this particlar texture
 	GLuint ID;
 	// Texture image dimensions
@@ -20,7 +25,11 @@ public:
 	// Constructor (sets default texture modes)
 	Texture2D();
 	// Generates texture from image data
-	void Generate(GLuint width, GLuint height, unsigned char* data);
+	void Generate(GLuint width, GLuint height, unsigned char* data, TextureType type);
 	// Binds the texture as the current active GL_TEXTURE_2D texture object
 	void Bind() const;
+
+	const char* GetTypeStr() {
+		return TypeStr[Type];
+	}
 };

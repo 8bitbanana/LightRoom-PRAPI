@@ -18,8 +18,9 @@ using std::vector;
 
 
 struct AssimpMesh {
-    vector<glm::vec3> Vertices;
+    vector<MeshVertex> Vertices;
     vector<GLuint> Indices;
+	vector<Texture2D> Textures;
     glm::mat4x4 Transform;
 	glm::vec4 DiffuseColor;
 	glm::vec4 SpecularColor;
@@ -37,7 +38,7 @@ public:
 
 	static Shader LoadShader(const GLchar* vShaderFile, const GLchar* fShaderFile, const GLchar* gShaderFile, string name);
 	static Shader GetShader(string name);
-	static Texture2D LoadTexture(const GLchar* file, GLboolean alpha, string name);
+	static Texture2D LoadTexture(const GLchar* file, string name, GLboolean alpha = GL_FALSE, Texture2D::TextureType textype = Texture2D::TextureType::DIFFUSE);
 	static Texture2D GetTexture(string name);
 	static vector<Mesh> LoadMeshes(string filename, string name);
 	static vector<Mesh> GetMeshes(string name);
@@ -47,14 +48,18 @@ private:
 	ResourceManager() {}
 
 	static Shader loadShaderFromFile(const GLchar* vShaderFile, const GLchar* fShaderFile, const GLchar* gShaderFile = nullptr);
-	static Texture2D loadTextureFromFile(const GLchar* file, GLboolean alpha);
+	static Texture2D loadTextureFromFile(const GLchar* file, GLboolean alpha, Texture2D::TextureType textype);
 	static vector<Mesh> loadMeshesFromFile(std::string filename);
 
 	static void loadMeshesFromNode(const aiNode* node, aiMesh** meshes, glm::mat4 currentTransform, vector<AssimpMesh>* assimpmeshes, const aiScene* scene);
+	static vector<Texture2D> loadMaterialTextures(aiMaterial *mat, aiTextureType type);
+
+	static Texture2D::TextureType AiToTex2D(aiTextureType aiT);
 
     static glm::mat4 AiToGlm(aiMatrix4x4 aiM);
+	static glm::vec2 AiToGlm(aiVector2D aiV);
     static glm::vec3 AiToGlm(aiVector3D aiV);
-	static glm::vec4 AiToGlm(aiColor4D aiC);
 	static glm::vec4 AiToGlm(aiColor3D aiC);
+	static glm::vec4 AiToGlm(aiColor4D aiC);
 };
 

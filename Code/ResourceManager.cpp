@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <stdexcept>
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -11,6 +12,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+using std::string;
 
 map<string, Texture2D> ResourceManager::Textures;
 map<string, Shader> ResourceManager::Shaders;
@@ -28,9 +31,9 @@ Shader ResourceManager::GetShader(string name)
 	return Shaders[name];
 }
 
-Texture2D ResourceManager::LoadTexture(const GLchar* file, GLboolean alpha, string name)
+Texture2D ResourceManager::LoadTexture(const GLchar* file, string name, GLboolean alpha, Texture2D::TextureType textype)
 {
-	Textures[name] = loadTextureFromFile(file, alpha);
+	Textures[name] = loadTextureFromFile(file, alpha, textype);
 	return Textures[name];
 }
 
@@ -46,6 +49,10 @@ vector<Mesh> ResourceManager::LoadMeshes(string filename, string name) {
 
 vector<Mesh> ResourceManager::GetMeshes(string name) {
 	return Meshes[name];
+}
+
+glm::vec2 ResourceManager::AiToGlm(aiVector2D aiV) {
+    return glm::vec2(aiV.x, aiV.y);
 }
 
 glm::mat4 ResourceManager::AiToGlm(aiMatrix4x4 aiM) {
@@ -69,6 +76,17 @@ glm::vec4 ResourceManager::AiToGlm(aiColor4D aiC) {
     return glm::vec4(aiC.r, aiC.g, aiC.b, aiC.a);
 }
 
+Texture2D::TextureType ResourceManager::AiToTex2D(aiTextureType aiT) {
+    switch (aiT) {
+        case aiTextureType_DIFFUSE:
+            return Texture2D::TextureType::DIFFUSE;
+        case aiTextureType_SPECULAR:
+            return Texture2D::TextureType::SPECULAR;
+        default:
+            throw std::invalid_argument("ResourceManager::AiToTex2D - Texture type is not supported.");
+    }
+}
+
 void ResourceManager::loadMeshesFromNode(const aiNode* node, aiMesh** meshes, glm::mat4 currentTransform, vector<AssimpMesh>* assimpmeshes, const aiScene* scene) {
     // Add this node's transform to the stack
     currentTransform = currentTransform * AiToGlm(node->mTransformation);
@@ -80,7 +98,16 @@ void ResourceManager::loadMeshesFromNode(const aiNode* node, aiMesh** meshes, gl
         meshStruct.Transform = currentTransform;
         // Add each vertex to the struct
         for (unsigned int vertIndex=0; vertIndex<mesh->mNumVertices; vertIndex++) {
-            meshStruct.Vertices.push_back(AiToGlm(mesh->mVertices[vertIndex]));
+            MeshVertex vertex;
+            vertex.Position = AiToGlm(mesh->mVertices[vertIndex]);
+            vertex.Normal = AiToGlm(mesh->mNormals[vertIndex]);
+
+            if (mesh->mTextureCoords[0]) {
+                vertex.TexCoords = (glm::vec2)AiToGlm(mesh->mTextureCoords[0][vertIndex]);
+            } else {
+                vertex.TexCoords = glm::vec2(0);
+            }
+            meshStruct.Vertices.push_back(vertex);
         }
         // Add each index inside each face to the struct
         for (unsigned int faceIndex=0; faceIndex<mesh->mNumFaces; faceIndex++) {
@@ -105,6 +132,8 @@ void ResourceManager::loadMeshesFromNode(const aiNode* node, aiMesh** meshes, gl
             meshStruct.EmissiveColor = AiToGlm(color);
             material->Get(AI_MATKEY_COLOR_TRANSPARENT, color);
             meshStruct.TransparentColor = AiToGlm(color);
+            
+            meshStruct.Textures = loadMaterialTextures(material, aiTextureType_DIFFUSE);
         }
 
         assimpmeshes->push_back(meshStruct);
@@ -115,6 +144,20 @@ void ResourceManager::loadMeshesFromNode(const aiNode* node, aiMesh** meshes, gl
         aiNode* child = node->mChildren[childIndex];
         loadMeshesFromNode(child, meshes, currentTransform, assimpmeshes, scene);
     }
+}
+
+vector<Texture2D> ResourceManager::loadMaterialTextures(aiMaterial *mat, aiTextureType type) {
+    vector<Texture2D> textures;
+    for (unsigned int i=0; i<mat->GetTextureCount(type); i++) {
+        aiString str;
+        mat->GetTexture(type, i, &str);
+        
+        string fullpath = "Textures\\";
+        fullpath.append(str.C_Str());
+        Texture2D texture = loadTextureFromFile(fullpath.c_str(), false, AiToTex2D(type));
+        textures.push_back(texture);
+    }
+    return textures;
 }
 
 vector<Mesh> ResourceManager::loadMeshesFromFile(string filename) {
@@ -134,25 +177,27 @@ vector<Mesh> ResourceManager::loadMeshesFromFile(string filename) {
 
     vector<AssimpMesh> assimpMeshes;
     loadMeshesFromNode(scene->mRootNode, scene->mMeshes, glm::mat4(1.0), &assimpMeshes, scene);
-    
-    // Extract the verts from the meshes into one vector
-    
 
     for (auto mesh : assimpMeshes) {
-        vector<glm::vec3> verts;
+        vector<MeshVertex> verts;
         vector<GLuint> inds;
-        Mesh outmesh;
+        vector<Texture2D> texs;
+        Mesh outmesh = Mesh();
 
         for (auto vert : mesh.Vertices) {
-            glm::vec4 vert4 = glm::vec4(vert, 1);
-            verts.push_back((glm::vec3)(vert4 * mesh.Transform));
+            glm::vec4 vert4 = glm::vec4(vert.Position, 1);
+            vert.Position = (glm::vec3)(vert4 * mesh.Transform);
+            verts.push_back(vert);
         }   
         for (auto ind : mesh.Indices) {
             inds.push_back(ind);
         }
+        for (auto tex : mesh.Textures) {
+            texs.push_back(tex);
+        }
 
         // Copy data from struct to Mesh object
-        outmesh.Import(verts, inds);
+        outmesh.Import(verts, inds, texs);
         outmesh.DiffuseColor = mesh.DiffuseColor;
 
         outmeshes.push_back(outmesh);
@@ -207,7 +252,7 @@ Shader ResourceManager::loadShaderFromFile(const GLchar* vShaderFile, const GLch
 	return shader;
 }
 
-Texture2D ResourceManager::loadTextureFromFile(const GLchar* file, GLboolean alpha)
+Texture2D ResourceManager::loadTextureFromFile(const GLchar* file, GLboolean alpha, Texture2D::TextureType textype)
 {
 	Texture2D texture;
 	if (alpha) {
@@ -217,10 +262,11 @@ Texture2D ResourceManager::loadTextureFromFile(const GLchar* file, GLboolean alp
 	int width, height;
 	//unsigned char* image = SOIL_load_image(file, &width, &height, 0, texture.Image_Format == GL_RGBA ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB);
 	
+    int comp = (texture.Image_Format == GL_RGBA ? STBI_rgb_alpha : STBI_rgb);
 
-	unsigned char* image = stbi_load(file, &width, &height, (int *)(texture.Image_Format == GL_RGBA ? STBI_rgb_alpha : STBI_rgb), 0);
+	unsigned char* image = stbi_load(file, &width, &height, &comp, 0);
 
-	texture.Generate(width, height, image);
+	texture.Generate(width, height, image, textype);
 	//SOIL_free_image_data(image);
 	stbi_image_free(image);
 	return texture;

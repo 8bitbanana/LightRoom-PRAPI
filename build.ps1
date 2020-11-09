@@ -130,8 +130,6 @@ $objectfiles = New-Object string[] $sourcefiles.Length;
 $oldHashes = Get-HashFile
 $newHashes = $oldHashes
 
-Write-Output $oldHashes
-
 $canlink = $true
 for ($i=0; $i -lt $sourcefiles.Length; $i++) {
     $sourcefile = $sourcefiles[$i]
@@ -212,6 +210,7 @@ if ($code -gt 0) {
 # Copy all the stuff to the build directory
 Copy-Item -Path "Models" -Destination "Build\$folder" -Recurse | Out-Null
 Copy-Item -Path "Shaders" -Destination "Build\$folder" -Recurse | Out-Null
+Copy-Item -Path "Textures" -Destination "Build\$folder" -Recurse | Out-Null
 Copy-Item -Path "DLLs\*" -Destination "Build\$folder" -Recurse | Out-Null
 
 Write-Host " Success!" -ForegroundColor Green

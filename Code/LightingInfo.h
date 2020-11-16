@@ -7,4 +7,8 @@ struct LightingInfo {
 
 	glm::vec4 AmbientColor;
 	float AmbientStrength;
+
+	float SpecularStrength;
+
+	glm::vec3 ViewPos;
 };

@@ -44,6 +44,7 @@ void Game::Init()
 	lighting.LightPos = glm::vec3(1.2f, 1.0f, 2.0f);
 	lighting.AmbientColor = glm::vec4(1);
 	lighting.AmbientStrength = 0.4f;
+	lighting.SpecularStrength = 0.5f;
 }
 
 void Game::Update(GLfloat dt)
@@ -61,6 +62,7 @@ void Game::Update(GLfloat dt)
 void Game::CalculateLighting() {
 	glm::quat lightquat = glm::angleAxis(5*dt, UP);
 	lighting.LightPos = glm::vec3(glm::mat4_cast(lightquat) * glm::vec4(lighting.LightPos, 1));
+	lighting.ViewPos = CameraPos;
 }
 
 void Game::CalculateCamera() {

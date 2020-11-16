@@ -50,6 +50,8 @@ void Mesh::Draw(Shader& shader, LightingInfo& lighting) {
 
 	shader.SetVector4f("ambientColor", lighting.AmbientColor);
 	shader.SetFloat("ambientStrength", lighting.AmbientStrength);
+	shader.SetVector3f("viewPos", lighting.ViewPos);
+	shader.SetFloat("specularStrength", lighting.SpecularStrength);
 
 	map<Texture2D::TextureType, int> texCounts;
 	

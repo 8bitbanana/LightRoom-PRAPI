@@ -43,7 +43,13 @@ void Mesh::Import(vector<MeshVertex> vertices, vector<GLuint> indices, vector<Te
 }
 
 void Mesh::Draw(Shader& shader) {
+	
+	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+	glm::vec4 lightColor(1.0f);
+
 	shader.SetVector4f("color", DiffuseColor);
+	shader.SetVector4f("lightColor", lightColor);
+	shader.SetVector3f("lightPos", lightPos);
 
 	map<Texture2D::TextureType, int> texCounts;
 	

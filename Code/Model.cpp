@@ -47,9 +47,13 @@ void Model::Draw(glm::mat4 projection, glm::mat4 view) {
 	currentModel *= glm::toMat4(rot);
     
 
-	auto pvm = projection * view * currentModel;
+	//auto pvm = projection * view * currentModel;
+    //shader.SetMatrix4("pvm", pvm);
 
-	shader.SetMatrix4("pvm", pvm);
+    auto proj_view = projection * view;
+
+    shader.SetMatrix4("pv", proj_view);
+    shader.SetMatrix4("model", currentModel);
 	
     for (Mesh mesh : meshes) {
 	    mesh.Draw(shader);

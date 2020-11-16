@@ -9,14 +9,14 @@
 #include "Game.h"
 #include "Code\Util.h"
 
-// #ifdef _WIN32
-// #include <Windows.h>
+#ifdef _WIN32
+#include <Windows.h>
 
-// extern "C" {
-// 	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-// }
+extern "C" {
+	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}
 
-// #endif
+#endif
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);

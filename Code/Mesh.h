@@ -4,6 +4,7 @@
 
 #include "Shader.h"
 #include "Texture.h"
+#include "LightingInfo.h"
 
 using std::vector;
 
@@ -17,7 +18,7 @@ class Mesh {
 public:
     Mesh();
     void Import(vector<MeshVertex> vertices, vector<GLuint> indices, vector<Texture2D> textures);
-    void Draw(Shader& shader);
+    void Draw(Shader& shader, LightingInfo& lighting);
 
     vector<MeshVertex> Vertices;
     vector<GLuint> Indices;

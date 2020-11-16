@@ -15,7 +15,7 @@ const glm::vec3 RIGHT = glm::vec3(1.0f, 0.0f, 0.0f);
 const float MOUSE_SENS = 45.0f;
 const float MOVE_SPEED = 15.0f;
 
-Model* object;
+vector<Model*> objects;
 
 Game::Game(GLuint width, GLuint height)
 	: Width(width), Height(height)
@@ -26,7 +26,9 @@ Game::Game(GLuint width, GLuint height)
 
 Game::~Game()
 {
-	delete object;
+	for (auto object : objects) {
+		delete object;
+	}
 }
 
 void Game::Init()
@@ -36,11 +38,32 @@ void Game::Init()
 	ResourceManager::LoadMeshes("Models/ball_mars.obj", "ball");
 	CurrentProjection = glm::perspective(glm::radians(60.0f), float(Width) / Height, 0.1f, 100.0f);
 
-	object = new Model("ball", glm::vec3(0), glm::vec3(0), glm::vec3(1));
+	objects.push_back(new Model("ball", glm::vec3(0), glm::vec3(0), glm::vec3(1)));
+
+	lighting.LightColor = glm::vec4(1);
+	lighting.LightPos = glm::vec3(1.2f, 1.0f, 2.0f);
+	lighting.AmbientColor = glm::vec4(1);
+	lighting.AmbientStrength = 0.4f;
 }
 
 void Game::Update(GLfloat dt)
 {
+	this->dt = dt;
+
+	CalculateLighting();
+	CalculateCamera();
+
+	for (auto object : objects) {
+		object->Update(dt);
+	}
+}
+
+void Game::CalculateLighting() {
+	glm::quat lightquat = glm::angleAxis(5*dt, UP);
+	lighting.LightPos = glm::vec3(glm::mat4_cast(lightquat) * glm::vec4(lighting.LightPos, 1));
+}
+
+void Game::CalculateCamera() {
 	CameraRot += glm::vec3(Mouse.y, -Mouse.x, 0) * dt * MOUSE_SENS;
 	if (CameraRot.x > 89.0f)  CameraRot.x = 89.0f;
 	if (CameraRot.x < -89.0f) CameraRot.x = -89.0f;
@@ -79,7 +102,9 @@ void Game::Update(GLfloat dt)
 
 void Game::Draw()
 {
-	object->Draw(CurrentProjection, CurrentView);
+	for (auto object : objects) {
+		object->Draw(CurrentProjection, CurrentView, lighting);
+	}
 }
 
 void Game::ResizeEvent(GLfloat width, GLfloat height)

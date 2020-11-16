@@ -6,6 +6,7 @@
 
 #include "Shader.h"
 #include "ResourceManager.h"
+#include "LightingInfo.h"
 
 using std::string;
 using std::vector;
@@ -19,7 +20,7 @@ public:
     Model(const string& mesh);
     Model(const string& mesh, vec3 position, vec3 rotation, vec3 size);
 
-    virtual void Draw(glm::mat4 projection, glm::mat4 view);
+    virtual void Draw(glm::mat4 projection, glm::mat4 view, LightingInfo& lighting);
 	virtual void Update(GLfloat dt);
 
     void SetShader(string name);

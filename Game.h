@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include "Code/LightingInfo.h"
+
 class Game
 {
 public:
@@ -20,6 +22,12 @@ public:
 	void Draw();
 	void ResizeEvent(GLfloat width, GLfloat height);
 private:
+	void CalculateCamera();
+	void CalculateLighting();
+
+	float dt;
+
+	LightingInfo lighting;
 	glm::vec3 CameraPos;
 	glm::vec3 CameraRot;
 	//glm::tquat<float> CameraRot;

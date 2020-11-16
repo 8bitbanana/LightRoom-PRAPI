@@ -42,14 +42,14 @@ void Mesh::Import(vector<MeshVertex> vertices, vector<GLuint> indices, vector<Te
 	glBindVertexArray(0);
 }
 
-void Mesh::Draw(Shader& shader) {
-	
-	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-	glm::vec4 lightColor(1.0f);
+void Mesh::Draw(Shader& shader, LightingInfo& lighting) {
 
 	shader.SetVector4f("color", DiffuseColor);
-	shader.SetVector4f("lightColor", lightColor);
-	shader.SetVector3f("lightPos", lightPos);
+	shader.SetVector4f("lightColor", lighting.LightColor);
+	shader.SetVector3f("lightPos", lighting.LightPos);
+
+	shader.SetVector4f("ambientColor", lighting.AmbientColor);
+	shader.SetFloat("ambientStrength", lighting.AmbientStrength);
 
 	map<Texture2D::TextureType, int> texCounts;
 	

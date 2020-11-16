@@ -37,7 +37,7 @@ void Model::Update(GLfloat dt) {
 	
 }
 
-void Model::Draw(glm::mat4 projection, glm::mat4 view) {
+void Model::Draw(glm::mat4 projection, glm::mat4 view, LightingInfo& lighting) {
     shader.Use();
 
 	currentModel = glm::mat4(1.0);
@@ -56,6 +56,6 @@ void Model::Draw(glm::mat4 projection, glm::mat4 view) {
     shader.SetMatrix4("model", currentModel);
 	
     for (Mesh mesh : meshes) {
-	    mesh.Draw(shader);
+	    mesh.Draw(shader, lighting);
     }
 }

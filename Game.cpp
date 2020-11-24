@@ -40,11 +40,26 @@ void Game::Init()
 
 	objects.push_back(new Model("ball", glm::vec3(0), glm::vec3(0), glm::vec3(1)));
 
-	lighting.LightColor = glm::vec4(1);
-	lighting.LightPos = glm::vec3(1.2f, 1.0f, 2.0f);
+	for (int i=0; i<MAX_LIGHTS; i++)
+		lighting.LightActive[i] = false;
+
+	lighting.LightColor[0] = glm::vec4(0,1,0,1);
+	lighting.LightPos[0] = glm::vec3(1.2f, 1.0f, 2.0f);
+	lighting.LightActive[0] = true;
+	lighting.SpecularStrength[0] = 0.5f;
+
+	lighting.LightColor[1] = glm::vec4(1,0,0,1);
+	lighting.LightPos[1] = glm::vec3(1.2f, 1.0f, 2.0f);
+	lighting.LightActive[1] = true;
+	lighting.SpecularStrength[1] = 0.4f;
+
+	lighting.LightColor[2] = glm::vec4(0.2,0.2,1,1);
+	lighting.LightPos[2] = glm::vec3(1.2f, 1.0f, 2.0f);
+	lighting.LightActive[2] = true;
+	lighting.SpecularStrength[2] = 1.0f;
+
 	lighting.AmbientColor = glm::vec4(1);
 	lighting.AmbientStrength = 0.4f;
-	lighting.SpecularStrength = 0.5f;
 }
 
 void Game::Update(GLfloat dt)
@@ -60,8 +75,9 @@ void Game::Update(GLfloat dt)
 }
 
 void Game::CalculateLighting() {
-	glm::quat lightquat = glm::angleAxis(5*dt, UP);
-	lighting.LightPos = glm::vec3(glm::mat4_cast(lightquat) * glm::vec4(lighting.LightPos, 1));
+	lighting.LightPos[0] = glm::vec3(glm::mat4_cast(glm::angleAxis(5*dt, UP)) * glm::vec4(lighting.LightPos[0], 1));
+	lighting.LightPos[1] = glm::vec3(glm::mat4_cast(glm::angleAxis(-3*dt, UP)) * glm::vec4(lighting.LightPos[1], 1));
+	lighting.LightPos[2] = glm::vec3(glm::mat4_cast(glm::angleAxis(8*dt, UP)) * glm::vec4(lighting.LightPos[2], 1));
 	lighting.ViewPos = CameraPos;
 }
 

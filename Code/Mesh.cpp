@@ -44,18 +44,21 @@ void Mesh::Import(vector<MeshVertex> vertices, vector<GLuint> indices, vector<Te
 
 void Mesh::Draw(Shader& shader, LightingInfo& lighting) {
 
-	shader.SetVector4f("color", DiffuseColor);
-	shader.SetVector4f("lightColor", lighting.LightColor);
-	shader.SetVector3f("lightPos", lighting.LightPos);
+	shader.SetVector4f("color", &DiffuseColor);
 
-	shader.SetVector4f("ambientColor", lighting.AmbientColor);
-	shader.SetFloat("ambientStrength", lighting.AmbientStrength);
-	shader.SetVector3f("viewPos", lighting.ViewPos);
-	shader.SetFloat("specularStrength", lighting.SpecularStrength);
+
+	shader.SetBool("lightActive", (GLboolean *)&lighting.LightActive[0], MAX_LIGHTS);
+	shader.SetVector4f("lightColor", &lighting.LightColor[0], MAX_LIGHTS);
+	shader.SetVector3f("lightPos", &lighting.LightPos[0], MAX_LIGHTS);
+	shader.SetFloat("specularStrength", &lighting.SpecularStrength[0], MAX_LIGHTS);
+
+	shader.SetVector4f("ambientColor", &lighting.AmbientColor);
+	shader.SetFloat("ambientStrength", &lighting.AmbientStrength);
+	shader.SetVector3f("viewPos", &lighting.ViewPos);
 
 	map<Texture2D::TextureType, int> texCounts;
 	
-	for (unsigned int i=0; i<Textures.size(); i++) {
+	for (GLint i=0; i<Textures.size(); i++) {
 		Texture2D* tex = &Textures[i];
 		glActiveTexture(GL_TEXTURE0 + i);
 		// Maps auto initialise variables
@@ -65,7 +68,7 @@ void Mesh::Draw(Shader& shader, LightingInfo& lighting) {
 		string fullname = "texture_" + name + number;
 		// printf("%s\n", fullname.c_str());
 		 // tell shader to use GL_TEXTURE0+i for this texture
-		shader.SetInteger(fullname.c_str(), i);
+		shader.SetInteger(fullname.c_str(), &i);
 		// bind texture to GL_TEXTURE0+i
 		tex->Bind();
 	}

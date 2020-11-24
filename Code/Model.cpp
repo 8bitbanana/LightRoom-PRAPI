@@ -52,8 +52,8 @@ void Model::Draw(glm::mat4 projection, glm::mat4 view, LightingInfo& lighting) {
 
     auto proj_view = projection * view;
 
-    shader.SetMatrix4("pv", proj_view);
-    shader.SetMatrix4("model", currentModel);
+    shader.SetMatrix4("pv", &proj_view);
+    shader.SetMatrix4("model", &currentModel);
 	
     for (Mesh mesh : meshes) {
 	    mesh.Draw(shader, lighting);

@@ -2,6 +2,8 @@
 
 #include <GL/glew.h>
 
+#define MAX_TEXTURES 8
+
 class Texture2D
 {
 private:

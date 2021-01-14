@@ -8,6 +8,7 @@ in vec3 FragPos;
 uniform vec4 color;
 
 #define MAX_LIGHTS 8
+#define MAX_TEXTURES 8
 
 uniform bool lightActive[MAX_LIGHTS];
 uniform vec4 lightColor[MAX_LIGHTS];
@@ -17,11 +18,11 @@ uniform vec4 ambientColor;
 uniform float ambientStrength;
 uniform vec3 viewPos;
 
-uniform sampler2D texture_diffuse0;
-uniform sampler2D texture_diffuse1;
-uniform sampler2D texture_diffuse2;
-uniform sampler2D texture_specular0;
-uniform sampler2D texture_specular1;
+uniform bool diffuseActive[MAX_TEXTURES];
+uniform bool specularActive[MAX_TEXTURES];
+
+uniform sampler2D texture_diffuse[MAX_TEXTURES];
+uniform sampler2D texture_specular[MAX_TEXTURES];
 
 void main() {
 	vec3 norm = normalize(Normal);
@@ -47,5 +48,8 @@ void main() {
 		lighting += specular;
 	}
 
-	FragColor = vec4(lighting, 1) * color * texture(texture_diffuse0, TexCoord);
+	if (diffuseActive[0])
+		FragColor = vec4(lighting, 1) * texture(texture_diffuse[0], TexCoord);
+	else
+		FragColor = vec4(lighting, 1) * color;
 }

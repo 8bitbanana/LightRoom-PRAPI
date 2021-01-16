@@ -12,15 +12,13 @@ using std::string;
 using std::vector;
 using glm::vec3;
 
-
-
 class Model {
 public:
     Model();
     Model(const string& mesh);
     Model(const string& mesh, vec3 position, vec3 rotation, vec3 size);
 
-    virtual void Draw(glm::mat4 projection, glm::mat4 view, LightingInfo& lighting);
+    virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 viewPos);
 	virtual void Update(GLfloat dt);
 
     void SetShader(string name);
@@ -31,6 +29,7 @@ public:
 protected:
     glm::highp_mat4 currentModel;
     vector<Mesh> meshes;
+    vector<ModelLamp> lamps;
 private:
     unsigned int VBO, VAO, EBO;
     Shader shader;

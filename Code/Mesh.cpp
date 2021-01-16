@@ -45,7 +45,6 @@ void Mesh::Import(vector<MeshVertex> vertices, vector<GLuint> indices, vector<Te
 
 void Mesh::Draw(Shader& shader, LightingInfo& lighting) {
 
-	shader.Use();
 	shader.SetVector4f("color", &DiffuseColor);
 
 	shader.SetBool("lightActive", (GLboolean *)&lighting.LightActive[0], MAX_LIGHTS);

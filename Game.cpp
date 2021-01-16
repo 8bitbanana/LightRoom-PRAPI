@@ -9,8 +9,6 @@
 
 #include <iostream>
 
-#define USE_EXAMPLE_LAMPS
-
 const glm::vec3 FORWARD = glm::vec3(0.0f, 0.0f, -1.0f);
 const glm::vec3 UP = glm::vec3(0.0f, 1.0f, 0.0f);
 const glm::vec3 RIGHT = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -37,56 +35,25 @@ void Game::Init()
 {
 	ResourceManager::LoadShader("Shaders/baseproj.vert", "Shaders/baseproj.frag", nullptr, "baseproj");
 	ResourceManager::LoadShader("Shaders/material.vert", "Shaders/material.frag", nullptr, "material");
-	ResourceManager::LoadMeshes("Models/ball_mars.obj", "ball");
-	ResourceManager::LoadMeshes("Models/cube-light.obj", "cube-light");
+	//ResourceManager::LoadModelData("Models/ball_mars.obj", "ball");
+	ResourceManager::LoadModelData("Models/cube-light.obj", "cube-light");
 	CurrentProjection = glm::perspective(glm::radians(60.0f), float(Width) / Height, 0.1f, 100.0f);
 
 	//objects.push_back(new Model("ball"));
-	objects.push_back(new Model("cube-light"));
-
-	for (int i=0; i<MAX_LIGHTS; i++)
-		lighting.LightActive[i] = false;
-
-#ifdef USE_EXAMPLE_LAMPS
-	lighting.LightColor[0] = glm::vec4(0,1,0,1);
-	lighting.LightPos[0] = glm::vec3(1.2f, 1.0f, 2.0f);
-	lighting.LightActive[0] = true;
-	lighting.SpecularStrength[0] = 0.5f;
-
-	lighting.LightColor[1] = glm::vec4(1,0,0,1);
-	lighting.LightPos[1] = glm::vec3(1.2f, 1.0f, 2.0f);
-	lighting.LightActive[1] = true;
-	lighting.SpecularStrength[1] = 0.4f;
-
-	lighting.LightColor[2] = glm::vec4(0.2,0.2,1,1);
-	lighting.LightPos[2] = glm::vec3(1.2f, 1.0f, 2.0f);
-	lighting.LightActive[2] = true;
-	lighting.SpecularStrength[2] = 1.0f;
-
-	lighting.AmbientColor = glm::vec4(1);
-	lighting.AmbientStrength = 0.4f;
-#endif
+	auto examplemodel = new Model("cube-light");
+	objects.push_back(examplemodel);
 }
 
 void Game::Update(GLfloat dt)
 {
 	this->dt = dt;
 
-	CalculateLighting();
+	//CalculateLighting();
 	CalculateCamera();
 
 	for (auto object : objects) {
 		object->Update(dt);
 	}
-}
-
-void Game::CalculateLighting() {
-#ifdef USE_EXAMPLE_LAMPS
-	lighting.LightPos[0] = glm::vec3(glm::mat4_cast(glm::angleAxis(5*dt, UP)) * glm::vec4(lighting.LightPos[0], 1));
-	lighting.LightPos[1] = glm::vec3(glm::mat4_cast(glm::angleAxis(-3*dt, UP)) * glm::vec4(lighting.LightPos[1], 1));
-	lighting.LightPos[2] = glm::vec3(glm::mat4_cast(glm::angleAxis(8*dt, UP)) * glm::vec4(lighting.LightPos[2], 1));
-#endif
-	lighting.ViewPos = CameraPos;
 }
 
 void Game::CalculateCamera() {
@@ -129,7 +96,7 @@ void Game::CalculateCamera() {
 void Game::Draw()
 {
 	for (auto object : objects) {
-		object->Draw(CurrentProjection, CurrentView, lighting);
+		object->Draw(CurrentProjection, CurrentView, CameraPos);
 	}
 }
 

@@ -16,6 +16,15 @@ using std::string;
 using std::map;
 using std::vector;
 
+struct ModelLamp {
+    glm::vec3 Position;
+    glm::vec3 Color;
+};
+
+struct ModelData {
+    vector<Mesh> meshes;
+    vector<ModelLamp> lamps;
+};
 
 struct AssimpMesh {
     vector<MeshVertex> Vertices;
@@ -34,14 +43,14 @@ class ResourceManager
 public:
 	static map<string, Shader> Shaders;
 	static map<string, Texture2D> Textures;
-	static map<string, vector<Mesh>> Meshes;
+	static map<string, ModelData> Models;
 
 	static Shader LoadShader(const GLchar* vShaderFile, const GLchar* fShaderFile, const GLchar* gShaderFile, string name);
 	static Shader GetShader(string name);
 	static Texture2D LoadTexture(const GLchar* file, string name, GLboolean alpha = GL_FALSE, Texture2D::TextureType textype = Texture2D::TextureType::DIFFUSE);
 	static Texture2D GetTexture(string name);
-	static vector<Mesh> LoadMeshes(string filename, string name);
-	static vector<Mesh> GetMeshes(string name);
+	static ModelData LoadModelData(string filename, string name);
+	static ModelData GetModelData(string name);
 	
 	static void Clear();
 private:
@@ -49,9 +58,9 @@ private:
 
 	static Shader loadShaderFromFile(const GLchar* vShaderFile, const GLchar* fShaderFile, const GLchar* gShaderFile = nullptr);
 	static Texture2D loadTextureFromFile(const GLchar* file, GLboolean alpha, Texture2D::TextureType textype);
-	static vector<Mesh> loadMeshesFromFile(std::string filename);
+	static ModelData loadModelDataFromFile(std::string filename);
 
-	static void loadMeshesFromNode(const aiNode* node, aiMesh** meshes, glm::mat4 currentTransform, vector<AssimpMesh>* assimpmeshes, const aiScene* scene);
+	static void loadObjectsFromNode(const aiNode* node, const aiScene* scene, glm::mat4 currentTransform, vector<AssimpMesh>* assimpmeshes);
 	static vector<Texture2D> loadMaterialTextures(aiMaterial *mat, aiTextureType type);
 
 	static Texture2D::TextureType AiToTex2D(aiTextureType aiT);

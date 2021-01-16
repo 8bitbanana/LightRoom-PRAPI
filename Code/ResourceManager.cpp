@@ -9,6 +9,8 @@
 #include <assimp/postprocess.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
+
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -17,7 +19,7 @@ using std::string;
 
 map<string, Texture2D> ResourceManager::Textures;
 map<string, Shader> ResourceManager::Shaders;
-map<string, vector<Mesh>> ResourceManager::Meshes;
+map<string, ModelData> ResourceManager::Models;
 
 
 Shader ResourceManager::LoadShader(const GLchar* vShaderFile, const GLchar* fShaderFile, const GLchar* gShaderFile, string name)
@@ -42,13 +44,21 @@ Texture2D ResourceManager::GetTexture(string name)
 	return Textures[name];
 }
 
-vector<Mesh> ResourceManager::LoadMeshes(string filename, string name) {
-	Meshes[name] = loadMeshesFromFile(filename);
-	return Meshes[name];
+ModelData ResourceManager::LoadModelData(string filename, string name) {
+	Models[name] = loadModelDataFromFile(filename);
+
+    auto model = Models[name];
+    printf("Loaded new model - %s\n", name);
+    printf(" Meshes: %d, Lamps: %d\n", model.meshes.size(), model.lamps.size());
+    for (auto lamp : model.lamps) {
+        printf("Lamp\n");
+        printf(" Pos %s\n Col %s\n", glm::to_string(lamp.Position), glm::to_string(lamp.Color));
+    }
+	return Models[name];
 }
 
-vector<Mesh> ResourceManager::GetMeshes(string name) {
-	return Meshes[name];
+ModelData ResourceManager::GetModelData(string name) {
+	return Models[name];
 }
 
 glm::vec2 ResourceManager::AiToGlm(aiVector2D aiV) {
@@ -87,12 +97,19 @@ Texture2D::TextureType ResourceManager::AiToTex2D(aiTextureType aiT) {
     }
 }
 
-void ResourceManager::loadMeshesFromNode(const aiNode* node, aiMesh** meshes, glm::mat4 currentTransform, vector<AssimpMesh>* assimpmeshes, const aiScene* scene) {
+void ResourceManager::loadObjectsFromNode(const aiNode* node, const aiScene* scene, glm::mat4 currentTransform, vector<AssimpMesh>* assimpmeshes) {
+    double factor;
+    if (node->mMetaData != NULL) {
+        node->mMetaData->Get("UnitScaleFactor", factor);
+        printf("[META]: SF - %f\n", factor);
+    }
+    
+
     // Add this node's transform to the stack
     currentTransform = currentTransform * AiToGlm(node->mTransformation);
     // Iterate through each mesh in this node
     for (unsigned int meshIndex=0; meshIndex<node->mNumMeshes; meshIndex++) {
-        aiMesh* mesh = meshes[node->mMeshes[meshIndex]];
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[meshIndex]];
         // Construct the Mesh struct
         AssimpMesh meshStruct;
         meshStruct.Transform = currentTransform;
@@ -142,7 +159,7 @@ void ResourceManager::loadMeshesFromNode(const aiNode* node, aiMesh** meshes, gl
     // Recursively run this function for all of this node's children
     for (unsigned int childIndex=0; childIndex<node->mNumChildren; childIndex++) {
         aiNode* child = node->mChildren[childIndex];
-        loadMeshesFromNode(child, meshes, currentTransform, assimpmeshes, scene);
+        loadObjectsFromNode(child, scene, currentTransform, assimpmeshes);
     }
 }
 
@@ -160,9 +177,9 @@ vector<Texture2D> ResourceManager::loadMaterialTextures(aiMaterial *mat, aiTextu
     return textures;
 }
 
-vector<Mesh> ResourceManager::loadMeshesFromFile(string filename) {
+ModelData ResourceManager::loadModelDataFromFile(string filename) {
     Assimp::Importer importer;
-    vector<Mesh> outmeshes = vector<Mesh>();
+    ModelData outmodel;
     const aiScene* scene = importer.ReadFile(filename,
         // aiProcess_CalcTangentSpace |
         aiProcess_Triangulate |
@@ -172,11 +189,20 @@ vector<Mesh> ResourceManager::loadMeshesFromFile(string filename) {
 
     if (!scene) {
         fprintf(stderr, "ASSIMP ERROR - %s\n", importer.GetErrorString());
-        return outmeshes;
+        return outmodel;
     }
 
+    
+    // for (unsigned int i = 0; i<scene->mMetaData->mNumProperties; i++) {
+    //     auto key = scene->mMetaData->mKeys[i];
+    //     int value;
+    //     scene->mMetaData->Get(key, value);
+    //     scene->mMetaData->Get("UnitScaleFactor", value);
+    //     printf("[META]: %s - %d\n", key, value);
+    // }
+
     vector<AssimpMesh> assimpMeshes;
-    loadMeshesFromNode(scene->mRootNode, scene->mMeshes, glm::mat4(1.0), &assimpMeshes, scene);
+    loadObjectsFromNode(scene->mRootNode, scene, glm::mat4(1.0), &assimpMeshes);
 
     for (auto mesh : assimpMeshes) {
         vector<MeshVertex> verts;
@@ -200,9 +226,18 @@ vector<Mesh> ResourceManager::loadMeshesFromFile(string filename) {
         outmesh.Import(verts, inds, texs);
         outmesh.DiffuseColor = mesh.DiffuseColor;
 
-        outmeshes.push_back(outmesh);
+        outmodel.meshes.push_back(outmesh);
     }
-    return outmeshes;
+
+    for (unsigned int lampIndex = 0; lampIndex < scene->mNumLights; lampIndex++) {
+        ModelLamp lampStruct;
+        aiLight* lamp = scene->mLights[lampIndex];
+        lampStruct.Color = AiToGlm(lamp->mColorDiffuse);
+        lampStruct.Position = AiToGlm(lamp->mPosition);
+        outmodel.lamps.push_back(lampStruct);
+    }
+
+    return outmodel;
 }
 
 void ResourceManager::Clear()
@@ -213,7 +248,7 @@ void ResourceManager::Clear()
 		glDeleteTextures(1, &iter.second.ID);
 	Shaders.clear();
 	Textures.clear();
-	Meshes.clear();
+	Models.clear();
 }
 
 Shader ResourceManager::loadShaderFromFile(const GLchar* vShaderFile, const GLchar* fShaderFile, const GLchar* gShaderFile)

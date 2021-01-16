@@ -27,7 +27,6 @@ private:
 
 	float dt;
 
-	LightingInfo lighting;
 	glm::vec3 CameraPos;
 	glm::vec3 CameraRot;
 	//glm::tquat<float> CameraRot;

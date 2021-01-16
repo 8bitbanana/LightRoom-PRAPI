@@ -30,7 +30,7 @@ void main() {
 	vec3 ambient = ambientStrength * vec3(ambientColor);
 	vec3 lighting = ambient;
 
-	for (int i=0; i<8; i++) {
+	for (int i=0; i<MAX_LIGHTS; i++) {
 		if (!lightActive[i]) {
 			continue;
 		}

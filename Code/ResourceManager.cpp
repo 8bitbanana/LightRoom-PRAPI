@@ -49,7 +49,12 @@ ModelData ResourceManager::LoadModelData(string filename, string name) {
 
     auto model = Models[name];
     printf("Loaded new model - %s\n", name);
-    printf(" Meshes: %d, Lamps: %d\n", model.meshes.size(), model.lamps.size());
+    printf(" Meshes: %d, Lamps: %d ", model.meshes.size(), model.lamps.size());
+    int totaltex = 0;
+    for (auto mesh : model.meshes) {
+        totaltex += mesh.Textures.size();
+    }
+    printf("Textures: %d\n", totaltex);
     for (auto lamp : model.lamps) {
         printf("Lamp\n");
         printf(" Pos %s\n Col %s\n", glm::to_string(lamp.Position), glm::to_string(lamp.Color));
@@ -117,9 +122,11 @@ void ResourceManager::loadObjectsFromNode(const aiNode* node, const aiScene* sce
         for (unsigned int vertIndex=0; vertIndex<mesh->mNumVertices; vertIndex++) {
             MeshVertex vertex;
             vertex.Position = AiToGlm(mesh->mVertices[vertIndex]);
-            vertex.Normal = AiToGlm(mesh->mNormals[vertIndex]);
+            
+            if (mesh->mNormals != NULL)
+                vertex.Normal = AiToGlm(mesh->mNormals[vertIndex]);
 
-            if (mesh->mTextureCoords[0]) {
+            if (mesh->mTextureCoords[0] != NULL) {
                 vertex.TexCoords = (glm::vec2)AiToGlm(mesh->mTextureCoords[0][vertIndex]);
             } else {
                 vertex.TexCoords = glm::vec2(0);
@@ -129,11 +136,16 @@ void ResourceManager::loadObjectsFromNode(const aiNode* node, const aiScene* sce
         // Add each index inside each face to the struct
         for (unsigned int faceIndex=0; faceIndex<mesh->mNumFaces; faceIndex++) {
             aiFace face = mesh->mFaces[faceIndex];
-            // aiProcess_Triangulate makes sure that all faces are triangles
-            assert(face.mNumIndices == 3);
-            for (unsigned int i=0; i<face.mNumIndices; i++) {
-                meshStruct.Indices.push_back(face.mIndices[i]);
+            // aiProcess_Triangulate should make sure that all faces are triangles
+
+            if (face.mNumIndices != 3) {
+                printf("Skipping index %d as it has %d faces.\n", faceIndex, face.mNumIndices);
+            } else {
+                for (unsigned int i=0; i<face.mNumIndices; i++) {
+                    meshStruct.Indices.push_back(face.mIndices[i]);
+                }
             }
+            
         }
         if (mesh->mMaterialIndex >= 0)
         {
@@ -191,15 +203,6 @@ ModelData ResourceManager::loadModelDataFromFile(string filename) {
         fprintf(stderr, "ASSIMP ERROR - %s\n", importer.GetErrorString());
         return outmodel;
     }
-
-    
-    // for (unsigned int i = 0; i<scene->mMetaData->mNumProperties; i++) {
-    //     auto key = scene->mMetaData->mKeys[i];
-    //     int value;
-    //     scene->mMetaData->Get(key, value);
-    //     scene->mMetaData->Get("UnitScaleFactor", value);
-    //     printf("[META]: %s - %d\n", key, value);
-    // }
 
     vector<AssimpMesh> assimpMeshes;
     loadObjectsFromNode(scene->mRootNode, scene, glm::mat4(1.0), &assimpMeshes);
@@ -293,7 +296,10 @@ Texture2D ResourceManager::loadTextureFromFile(const GLchar* file, GLboolean alp
 	if (alpha) {
 		texture.Internal_Format = GL_RGBA;
 		texture.Image_Format = GL_RGBA;
-	}
+	} else {
+        texture.Internal_Format = GL_RGB;
+        texture.Image_Format = GL_RGB;
+    }
 	int width, height;
 	//unsigned char* image = SOIL_load_image(file, &width, &height, 0, texture.Image_Format == GL_RGBA ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB);
 	

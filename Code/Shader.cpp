@@ -49,13 +49,14 @@ void Shader::SetBool(const GLchar* name, GLboolean* value, GLsizei count, GLbool
 {
 	auto BoolArray = new GLint[count];
 	for (unsigned int i=0; i<count; i++) {
-		BoolArray[i] = value[i];
+		BoolArray[i] = (GLint)value[i];
 	}
 	if (useShader)
 		this->Use();
 	glUniform1iv(glGetUniformLocation(this->ID, name), count, BoolArray);
 	delete[] BoolArray;
 }
+
 void Shader::SetFloat(const GLchar* name, GLfloat* value, GLsizei count, GLboolean useShader)
 {
 	if (useShader)

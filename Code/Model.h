@@ -16,6 +16,7 @@ class Model {
 public:
     Model();
     Model(const string& mesh);
+    Model(const string& mesh, vec3 position);
     Model(const string& mesh, vec3 position, vec3 rotation, vec3 size);
 
     virtual void Draw(glm::mat4 projection, glm::mat4 view, glm::vec3 viewPos);

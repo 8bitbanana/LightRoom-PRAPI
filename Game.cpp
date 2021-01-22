@@ -35,13 +35,15 @@ void Game::Init()
 {
 	ResourceManager::LoadShader("Shaders/baseproj.vert", "Shaders/baseproj.frag", nullptr, "baseproj");
 	ResourceManager::LoadShader("Shaders/material.vert", "Shaders/material.frag", nullptr, "material");
-	//ResourceManager::LoadModelData("Models/ball_mars.obj", "ball");
+	ResourceManager::LoadModelData("Models/ball_mars.obj", "ball");
 	ResourceManager::LoadModelData("Models/cube-light.obj", "cube-light");
+	ResourceManager::LoadModelData("Models/radio.obj", "radio");
+	
 	CurrentProjection = glm::perspective(glm::radians(60.0f), float(Width) / Height, 0.1f, 100.0f);
 
-	//objects.push_back(new Model("ball"));
-	auto examplemodel = new Model("cube-light");
-	objects.push_back(examplemodel);
+	objects.push_back(new Model("ball", glm::vec3(0,0,0)));
+	objects.push_back(new Model("cube-light", glm::vec3(5,0,0)));
+	objects.push_back(new Model("radio", glm::vec3(10,0,0)));
 }
 
 void Game::Update(GLfloat dt)
